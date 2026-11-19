@@ -4,11 +4,13 @@ import MenuList from "../components/MenuList.jsx";
 import { Loading, ErrorMessage } from "../components/Status.jsx";
 import { useVendors } from "../hooks/useVendors.js";
 import { useFavourites } from "../hooks/useFavourites.js";
+import { useAuth } from "../hooks/useAuth.js";
 
 function VendorPage() {
   const { id } = useParams(); // /vendor/2412663-faiz-cafe -> id = '2412663-faiz-cafe'
   const { vendors, loading, error, reload } = useVendors();
   const { favouriteIds } = useFavourites();
+  const { user } = useAuth();
   const [favouritesOnly, setFavouritesOnly] = useState(false);
 
   if (loading) return <Loading />;
@@ -26,7 +28,9 @@ function VendorPage() {
     );
   }
 
-  const visibleItems = favouritesOnly
+  // guests have no favourites, so the filter only applies when signed in
+  const showFavouritesOnly = user && favouritesOnly;
+  const visibleItems = showFavouritesOnly
     ? vendor.menu.filter((item) => favouriteIds.includes(item.id))
     : vendor.menu;
 
@@ -41,16 +45,18 @@ function VendorPage() {
         {vendor.location} &middot; {vendor.openHours}
       </p>
 
-      <p>
-        <label>
-          <input
-            type="checkbox"
-            checked={favouritesOnly}
-            onChange={(event) => setFavouritesOnly(event.target.checked)}
-          />
-          Favourites only
-        </label>
-      </p>
+      {user && (
+        <p>
+          <label>
+            <input
+              type="checkbox"
+              checked={favouritesOnly}
+              onChange={(event) => setFavouritesOnly(event.target.checked)}
+            />
+            Favourites only
+          </label>
+        </p>
+      )}
 
       <MenuList items={visibleItems} />
     </section>

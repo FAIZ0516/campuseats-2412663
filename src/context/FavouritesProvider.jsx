@@ -1,15 +1,14 @@
 import { useLocalStorage } from "../hooks/useLocalStorage.js";
+import { useAuth } from "../hooks/useAuth.js";
 import { FavouritesContext } from "./favourites-context.js";
 
-// Personal feature (digit 3): favourites used to be state in App.
-// Now they live here so every page can read them, and they survive a refresh.
 function FavouritesProvider({ children }) {
-  const [favouriteIds, setFavouriteIds] = useLocalStorage(
-    "campuseats-favourites",
-    [],
-  );
+  const { user } = useAuth();
+  const storageKey = user ? "ce-favs-" + user.uid : null;
+  const [favouriteIds, setFavouriteIds] = useLocalStorage(storageKey, []);
 
   function toggleFavourite(itemId) {
+    if (!user) return; // guests can't save favourites
     setFavouriteIds((prevIds) =>
       prevIds.includes(itemId)
         ? prevIds.filter((id) => id !== itemId)

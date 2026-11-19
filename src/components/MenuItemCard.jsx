@@ -1,4 +1,8 @@
+import { Link, useLocation } from "react-router";
+
 function MenuItemCard({ item, onAdd, isFavourite, onToggleFavourite }) {
+  const location = useLocation();
+
   return (
     <article className="card menu-card">
       <div className="thumb" aria-hidden="true">
@@ -16,19 +20,27 @@ function MenuItemCard({ item, onAdd, isFavourite, onToggleFavourite }) {
         disabled={!item.available}
         onClick={() => onAdd(item)}
       >
-        {item.available ? 'Add to cart' : 'Sold out'}
+        {item.available ? "Add to cart" : "Sold out"}
       </button>
 
-      <button
-        type="button"
-        className="btn btn-outline"
-        aria-pressed={isFavourite}
-        onClick={() => onToggleFavourite(item.id)}
-      >
-        {isFavourite ? '★ Favourite' : '☆ Add to favourites'}
-      </button>
+      {onToggleFavourite ? (
+        <button
+          type="button"
+          className="btn btn-outline"
+          aria-pressed={isFavourite}
+          onClick={() => onToggleFavourite(item.id)}
+        >
+          {isFavourite ? "★ Favourite" : "☆ Add to favourites"}
+        </button>
+      ) : (
+        <p className="muted">
+          <Link to="/login" state={{ from: location.pathname }}>
+            Log in to save favourites
+          </Link>
+        </p>
+      )}
     </article>
-  )
+  );
 }
 
-export default MenuItemCard
+export default MenuItemCard;
