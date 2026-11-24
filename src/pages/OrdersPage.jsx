@@ -1,8 +1,18 @@
 import { Link } from "react-router";
-import { useCart } from "../hooks/useCart.js";
+import OrderStatus from "../components/OrderStatus.jsx";
+import OrderActions from "../components/OrderActions.jsx";
+import { Loading, ErrorMessage } from "../components/Status.jsx";
+import { useMyOrders } from "../hooks/useMyOrders.js";
 
 function OrdersPage() {
-  const { orders } = useCart();
+  const { orders, loading, error } = useMyOrders(); // replaces useCart().orders
+
+  if (loading) return <Loading />;
+  if (error) {
+    return (
+      <ErrorMessage message={error} onRetry={() => window.location.reload()} />
+    );
+  }
 
   if (orders.length === 0) {
     return (
@@ -18,28 +28,26 @@ function OrdersPage() {
   return (
     <>
       <h2 className="section-title">My orders</h2>
+      <p className="muted">Status updates appear here live.</p>
       <ul className="order-list">
         {orders.map((order) => (
           <li key={order.id} className="card">
-            <div className="row">
-              <h3>Order for {order.name}</h3>
-              <strong>RM {order.total.toFixed(2)}</strong>
-            </div>
+            <p className="cart-name">
+              {order.vendorName} &middot; pickup {order.pickupTime}
+            </p>
             <p className="muted">
-              Placed {new Date(order.placedAt).toLocaleString()}
+              {order.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}
             </p>
-            <p>
-              Pickup at <strong>{order.pickupTime}</strong>, Mahallah{" "}
-              <strong>{order.mahallah}</strong>
+            {/* createdAt is null for a moment until the server fills it in */}
+            <p className="muted">
+              Placed{" "}
+              {order.createdAt
+                ? order.createdAt.toDate().toLocaleString("en-MY")
+                : "just now"}
             </p>
-            <ul>
-              {order.items.map((line) => (
-                <li key={line.item.id}>
-                  {line.qty} &times; {line.item.name} (RM{" "}
-                  {(line.item.price * line.qty).toFixed(2)})
-                </li>
-              ))}
-            </ul>
+            <p className="price">RM {order.total.toFixed(2)}</p>
+            <OrderStatus status={order.status} />
+            {order.status === "Received" && <OrderActions order={order} />}
           </li>
         ))}
       </ul>

@@ -1,11 +1,10 @@
 import { useLocalStorage } from "../hooks/useLocalStorage.js";
 import { CartContext } from "./cart-context.js";
 
-// Owns the cart and the list of past orders. Both are saved in
-// localStorage, so a refresh does not empty the cart.
+// Owns the cart. It is saved in localStorage, so a refresh does not empty it.
+// Week 6: placed orders are saved in Firestore (services/orders.js), not here.
 function CartProvider({ children }) {
   const [cart, setCart] = useLocalStorage("campuseats-cart", []);
-  const [orders, setOrders] = useLocalStorage("campuseats-orders", []);
 
   // derived from the cart on every render, not stored
   const count = cart.reduce((sum, line) => sum + line.qty, 0);
@@ -39,29 +38,19 @@ function CartProvider({ children }) {
     setCart((prevCart) => prevCart.filter((line) => line.item.id !== itemId));
   }
 
-  // details = { name, mahallah, pickupTime } from the checkout form
-  function placeOrder(details) {
-    const order = {
-      id: Date.now(),
-      ...details,
-      items: cart,
-      total,
-      placedAt: new Date().toISOString(),
-    };
-
-    setOrders((prevOrders) => [order, ...prevOrders]); // newest first
+  // called after the orders are saved in Firestore
+  function clearCart() {
     setCart([]);
   }
 
   const value = {
     cart,
-    orders,
     count,
     total,
     addToCart,
     changeQty,
     removeFromCart,
-    placeOrder,
+    clearCart,
   };
 
   return <CartContext value={value}>{children}</CartContext>;

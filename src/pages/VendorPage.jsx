@@ -2,21 +2,23 @@ import { useState } from "react";
 import { Link, useParams } from "react-router";
 import MenuList from "../components/MenuList.jsx";
 import { Loading, ErrorMessage } from "../components/Status.jsx";
-import { useVendors } from "../hooks/useVendors.js";
+import { useVendor } from "../hooks/useVendor.js";
 import { useFavourites } from "../hooks/useFavourites.js";
 import { useAuth } from "../hooks/useAuth.js";
 
 function VendorPage() {
   const { id } = useParams(); // /vendor/2412663-faiz-cafe -> id = '2412663-faiz-cafe'
-  const { vendors, loading, error, reload } = useVendors();
-  const { favouriteIds } = useFavourites();
+  const { vendor, menu, loading, error } = useVendor(id);
+  const { favouriteIds, error: favouritesError } = useFavourites();
   const { user } = useAuth();
   const [favouritesOnly, setFavouritesOnly] = useState(false);
 
   if (loading) return <Loading />;
-  if (error) return <ErrorMessage message={error} onRetry={reload} />;
-
-  const vendor = vendors.find((v) => v.id === id);
+  if (error) {
+    return (
+      <ErrorMessage message={error} onRetry={() => window.location.reload()} />
+    );
+  }
 
   if (!vendor) {
     return (
@@ -28,11 +30,14 @@ function VendorPage() {
     );
   }
 
+  // Each cart line must know its vendor, so orders can be split per vendor.
+  const items = menu.map((item) => ({ ...item, vendorName: vendor.name }));
+
   // guests have no favourites, so the filter only applies when signed in
   const showFavouritesOnly = user && favouritesOnly;
   const visibleItems = showFavouritesOnly
-    ? vendor.menu.filter((item) => favouriteIds.includes(item.id))
-    : vendor.menu;
+    ? items.filter((item) => favouriteIds.includes(item.id))
+    : items;
 
   return (
     <section>
@@ -55,6 +60,12 @@ function VendorPage() {
             />
             Favourites only
           </label>
+        </p>
+      )}
+
+      {favouritesError && (
+        <p className="field-error" role="alert">
+          {favouritesError}
         </p>
       )}
 

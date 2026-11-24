@@ -1,22 +1,29 @@
-import { startTransition } from "react";
+import { startTransition, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import CartItem from "../components/CartItem.jsx";
 import CheckoutForm from "../components/CheckoutForm.jsx";
 import { useCart } from "../hooks/useCart.js";
+import { useAuth } from "../hooks/useAuth.js";
+import { placeOrders } from "../services/orders.js";
 
 function CartPage() {
-  const { cart, total, changeQty, removeFromCart, placeOrder } = useCart();
+  const { cart, total, changeQty, removeFromCart, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [error, setError] = useState("");
 
   // CheckoutForm only calls this when all three fields are valid.
-  // React Router changes pages inside a transition, so clearing the cart is
-  // put in the same transition. Otherwise "Your cart is empty" flashes for a
-  // moment before the Orders page shows up.
-  function handlePlaceOrder(details) {
-    startTransition(() => {
-      placeOrder(details);
-      navigate("/orders");
-    });
+  async function handlePlaceOrder(details) {
+    setError("");
+    try {
+      await placeOrders(user, cart, details);
+      startTransition(() => {
+        clearCart();
+        navigate("/orders");
+      });
+    } catch (err) {
+      setError(`Could not place the order: ${err.message}`);
+    }
   }
 
   if (cart.length === 0) {
@@ -34,6 +41,11 @@ function CartPage() {
   return (
     <>
       <h2 className="section-title">Your cart</h2>
+      {error && (
+        <p className="field-error" role="alert">
+          {error}
+        </p>
+      )}
       <div className="cart-layout">
         <div className="card">
           <ul className="cart-list">
@@ -48,7 +60,10 @@ function CartPage() {
           </ul>
           <p className="cart-total">Total: RM {total.toFixed(2)}</p>
         </div>
-        <CheckoutForm onPlaceOrder={handlePlaceOrder} />
+        <CheckoutForm
+          defaultName={user?.displayName ?? ""}
+          onPlaceOrder={handlePlaceOrder}
+        />
       </div>
     </>
   );

@@ -41,3 +41,10 @@ NONE
 - What I asked for: Help explain Lab 5 and guide me the .env.local setup, AuthProvider and the useAuth hook, the login and register pages with friendly error messages, protected routes, and the Week 5 step of my favourites feature (favourites need an account).
 - What I kept, changed or rejected, and why: I created the Firebase project, turned on Email/Password and Google sign-in, and filled in .env.local myself. I followed the lab's code for the auth files, used the AI's explanation to finish the TODOs and then typed the changes into my own project.
 - One thing the AI got wrong and how I fixed it: When I typed a wrong password, the login page showed "Something went wrong" instead of "Wrong email or password." This was because the AI's authErrors.js was missing some of the error codes Firebase can send. I added those codes and now a wrong password shows the right message.
+
+## Week 6
+
+- Tool(s): Claude
+- What I asked for: Help to understand Lab 6 and to move CampusEats from vendors.json and localStorage to Firestore, including my favourites feature for Week 6.
+- What I kept, changed or rejected, and why: I created the Firestore database and seeded my shop. I followed the lab's code and finished the five TODOs.I tested it by changing an order status in the console, changing the pickup time and cancelling an order.
+- One thing the AI got wrong and how I fixed it: The favourites error message was first inside MenuList, so on the Favourites page it would show many times. I moved it to the pages so it only shows once.

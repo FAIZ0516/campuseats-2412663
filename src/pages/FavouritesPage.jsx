@@ -2,29 +2,31 @@ import { Link } from "react-router";
 import MenuList from "../components/MenuList.jsx";
 import { Loading, ErrorMessage } from "../components/Status.jsx";
 import { useVendors } from "../hooks/useVendors.js";
+import { useVendor } from "../hooks/useVendor.js";
 import { useFavourites } from "../hooks/useFavourites.js";
 
-// Personal feature (digit 3), Week 4 step: a page that lists every
-// favourite item, grouped under the vendor it comes from.
 function FavouritesPage() {
   const { vendors, loading, error, reload } = useVendors();
-  const { favouriteIds } = useFavourites();
+  const {
+    favouriteIds,
+    loading: favouritesLoading,
+    error: favouritesError,
+  } = useFavourites();
 
-  if (loading) return <Loading />;
+  if (loading || favouritesLoading) return <Loading />;
   if (error) return <ErrorMessage message={error} onRetry={reload} />;
 
-  // only the ids are saved, so look the items up in the vendor data
-  const groups = vendors
-    .map((vendor) => ({
-      vendor,
-      items: vendor.menu.filter((item) => favouriteIds.includes(item.id)),
-    }))
-    .filter((group) => group.items.length > 0);
+  const errorLine = favouritesError && (
+    <p className="field-error" role="alert">
+      {favouritesError}
+    </p>
+  );
 
-  if (groups.length === 0) {
+  if (favouriteIds.length === 0) {
     return (
       <>
         <h2 className="section-title">My favourites</h2>
+        {errorLine}
         <p className="muted">
           No favourites yet. Open a <Link to="/">vendor</Link> and tap
           &ldquo;Add to favourites&rdquo; on an item.
@@ -36,15 +38,35 @@ function FavouritesPage() {
   return (
     <>
       <h2 className="section-title">My favourites</h2>
-      {groups.map(({ vendor, items }) => (
-        <section key={vendor.id}>
-          <h3 className="section-title">
-            <Link to={`/vendor/${vendor.id}`}>{vendor.name}</Link>
-          </h3>
-          <MenuList items={items} />
-        </section>
+      {errorLine}
+      {vendors.map((vendor) => (
+        <FavouriteGroup
+          key={vendor.id}
+          vendor={vendor}
+          favouriteIds={favouriteIds}
+        />
       ))}
     </>
+  );
+}
+
+// One vendor's favourite items. Menus are a subcollection now (not inside
+// the vendor any more), so each group reads its own vendor's menu.
+function FavouriteGroup({ vendor, favouriteIds }) {
+  const { menu } = useVendor(vendor.id);
+  const items = menu
+    .filter((item) => favouriteIds.includes(item.id))
+    .map((item) => ({ ...item, vendorName: vendor.name }));
+
+  if (items.length === 0) return null; // nothing saved from this vendor
+
+  return (
+    <section>
+      <h3 className="section-title">
+        <Link to={`/vendor/${vendor.id}`}>{vendor.name}</Link>
+      </h3>
+      <MenuList items={items} />
+    </section>
   );
 }
 
